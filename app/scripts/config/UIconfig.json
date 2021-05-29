@@ -32,9 +32,9 @@
 	},
 	"whiteLabel": {
 		"loginPage":{
-			"hideCommunityDetails": false,
+			"hideCommunityDetails": true,
 			"releaseDetails": false,
-			"companyName": "Mifos"
+			"companyName": "Yashvi"
 		}
 	}
   }
