@@ -1,6 +1,6 @@
 (function (module) {
     mifosX.controllers = _.extend(module, {
-        AccCoaController: function (scope,$rootScope, translate, resourceFactory, location) {
+        AccCoaController: function (scope,$rootScope, translate, resourceFactory, location, anchorScroll) {
 			
 			$rootScope.tempNodeID = -100; // variable used to store nodeID (from directive), so it(nodeID) is available for detail-table
 			
@@ -9,6 +9,12 @@
 
             scope.routeTo = function (id) {
                 location.path('/viewglaccount/' + id);
+            };
+
+            scope.scrollto = function (link){
+                location.hash(link);
+                anchorScroll();
+
             };
 
             if (!scope.searchCriteria.acoa) {
@@ -110,7 +116,7 @@
 			
         }
     });
-    mifosX.ng.application.controller('AccCoaController', ['$scope','$rootScope', '$translate', 'ResourceFactory', '$location', mifosX.controllers.AccCoaController]).run(function ($log) {
+    mifosX.ng.application.controller('AccCoaController', ['$scope','$rootScope', '$translate', 'ResourceFactory', '$location','$anchorScroll', mifosX.controllers.AccCoaController]).run(function ($log) {
         $log.info("AccCoaController initialized");
     });
 }(mifosX.controllers || {}));
@@ -687,7 +693,7 @@
     });
 }(mifosX.controllers || {}));;(function (module) {
     mifosX.controllers = _.extend(module, {
-        AccountingClosureController: function (scope, resourceFactory, location, translate, routeParams, dateFilter) {
+        AccountingClosureController: function (scope, resourceFactory, location, anchorScroll, translate, routeParams, dateFilter) {
             scope.first = {};
             scope.formData = {};
             scope.first.date = new Date();
@@ -708,6 +714,12 @@
 
             scope.routeTo = function (id) {
                 location.path('/view_close_accounting/' + id);
+            };
+            
+            scope.scrollto = function (link){
+                location.hash(link);
+                anchorScroll();
+
             };
 
             scope.submit = function () {
@@ -736,23 +748,30 @@
             }
         }
     });
-    mifosX.ng.application.controller('AccountingClosureController', ['$scope', 'ResourceFactory', '$location', '$translate', '$routeParams', 'dateFilter', mifosX.controllers.AccountingClosureController]).run(function ($log) {
+    mifosX.ng.application.controller('AccountingClosureController', ['$scope', 'ResourceFactory', '$location', '$translate', '$routeParams', 'dateFilter','$anchorScroll', mifosX.controllers.AccountingClosureController]).run(function ($log) {
         $log.info("AccountingClosureController initialized");
     });
 }(mifosX.controllers || {}));
 ;(function (module) {
     mifosX.controllers = _.extend(module, {
-        AccountingRuleController: function (scope, resourceFactory, location) {
+        AccountingRuleController: function (scope, resourceFactory, location, anchorScroll) {
             scope.routeTo = function (id) {
                 location.path('/viewaccrule/' + id);
             };
+            scope.scrollto = function (link){
+                location.hash(link);
+                anchorScroll();
+
+            };
+
             resourceFactory.accountingRulesResource.get(function (data) {
                 scope.rules = data;
             });
+         
 
         }
     });
-    mifosX.ng.application.controller('AccountingRuleController', ['$scope', 'ResourceFactory', '$location', mifosX.controllers.AccountingRuleController]).run(function ($log) {
+    mifosX.ng.application.controller('AccountingRuleController', ['$scope', 'ResourceFactory', '$location','$anchorScroll', mifosX.controllers.AccountingRuleController]).run(function ($log) {
         $log.info("AccountingRuleController initialized");
     });
 }(mifosX.controllers || {}));;(function (module) {
@@ -3980,7 +3999,6 @@
             scope.tf = "HH:mm";
             scope.clientId = routeParams.clientId;
 
-
             var requestParams = {staffInSelectedOfficeOnly:true};
             if (routeParams.groupId) {
                 requestParams.groupId = routeParams.groupId;
@@ -4044,26 +4062,24 @@
 
                 scope.enableAddress=data.isAddressEnabled;
 
-                if(scope.enableAddress===true)
-                {
-                    scope.addressTypes=data.address[0].addressTypeIdOptions;
-                    scope.countryOptions=data.address[0].countryIdOptions;
-                    scope.stateOptions=data.address[0].stateProvinceIdOptions;
-
+                	   if (scope.enableAddress === true) {
+                           scope.addressTypes = data.address[0].addressTypeIdOptions;
+                           scope.countryOptions = data.address.countryIdOptions;
+                           scope.stateOptions = data.address.stateProvinceIdOptions;
+                       
                     resourceFactory.addressFieldConfiguration.get({entity:entityname},function(data){
-
-
 
                         for(var i=0;i<data.length;i++)
                         {
                             data[i].field='scope.'+data[i].field;
-                            eval(data[i].field+"="+data[i].is_enabled);
-
+                            if(data[i].is_enabled == undefined) {
+                                //For dev.mifos.io or demo.mifos.io
+                                eval(data[i].field+"="+data[i].isEnabled);
+                            } else {
+                                //For fineract server
+                                eval(data[i].field+"="+data[i].is_enabled);
+                            }
                         }
-
-
-
-
 
                     })
 
@@ -4264,6 +4280,9 @@
                         if(scope.addressArray[i].addressTypeId)
                         {
                             temp.addressTypeId=scope.addressArray[i].addressTypeId;
+                        }
+                        if (scope.addressArray[i].street) {
+                            temp.street = scope.addressArray[i].street;
                         }
                         if(scope.addressArray[i].addressLine1)
                         {
@@ -4854,7 +4873,7 @@
                         for(var i=0;i<data.length;i++)
                         {
                             data[i].field='scope.view.'+data[i].field;
-                            eval(data[i].field+"="+data[i].is_enabled);
+                            eval(data[i].field+"="+data[i].isEnabled);
 
                         }
 
@@ -5308,6 +5327,13 @@
             };
             resourceFactory.clientAccountResource.get({clientId: routeParams.id}, function (data) {
                 scope.clientAccounts = data;
+                if(data.loanAccounts){
+                    for(var i in data.loanAccounts){
+                        if(data.loanAccounts[i].status.value == "Active" && data.loanAccounts[i].inArrears){
+                            scope.clientAccounts.loanAccounts[i].status.value = "Active in Bad Standing"
+                        }
+                    }
+                }
                 if (data.savingsAccounts) {
                     for (var i in data.savingsAccounts) {
                         if (data.savingsAccounts[i].status.value == "Active") {
@@ -6757,15 +6783,19 @@
           
 
 
-                for(var i=0;i<data.length;i++)
-                {
-                    data[i].field='$scope.'+data[i].field;
-                    eval(data[i].field+"="+data[i].is_enabled);
+                   for(var i=0;i<data.length;i++)
+                        {
+                            data[i].field='$scope.'+data[i].field;
+                            if(data[i].is_enabled == undefined) {
+                                //For dev.mifos.io or demo.mifos.io
+                                eval(data[i].field+"="+data[i].isEnabled);
+                            } else {
+                                //For fineract server
+                                eval(data[i].field+"="+data[i].is_enabled);
+                            }
+                        }
 
-                }
-
-
-            })
+                    })
             $scope.routeTo=function()
             {
                 location.path('/viewclient/'+clientId);
@@ -6817,7 +6847,8 @@
     });
 
 }
-(mifosX.controllers || {}));;(function (module) {
+(mifosX.controllers || {}));
+;(function (module) {
     mifosX.controllers = _.extend(module, {
         EditAddressController: function ($scope, resourceFactory, routeParams, location) {
 
@@ -6851,17 +6882,20 @@
 
 
 
+                   for(var i=0;i<data.length;i++)
+                        {
+                            data[i].field='$scope.'+data[i].field;
+                            if(data[i].is_enabled == undefined) {
+                                //For dev.mifos.io or demo.mifos.io
+                                eval(data[i].field+"="+data[i].isEnabled);
+                            } else {
+                                //For fineract server
+                                eval(data[i].field+"="+data[i].is_enabled);
+                            }
+                        }
 
-                for(var i=0;i<data.length;i++)
-                {
-                    data[i].field='$scope.'+data[i].field;
-                    eval(data[i].field+"="+data[i].is_enabled);
+                    })
 
-                }
-
-
-
-            })
             $scope.routeTo=function()
             {
                 location.path('/viewclient/'+clientId);
@@ -6880,6 +6914,11 @@
                     {
                         if(data[i].addressId==addressId)
                         {
+
+                            if(data[i].street&&$scope.street)
+                            {
+                                $scope.formData.street=data[i].street;
+                            }
                             if(data[i].addressLine1&&$scope.addressLine1)
                             {
                                 $scope.formData.addressLine1=data[i].addressLine1;
@@ -6958,7 +6997,8 @@
     });
 
 }
-(mifosX.controllers || {}));;(function (module) {
+(mifosX.controllers || {}));
+;(function (module) {
     mifosX.controllers = _.extend(module, {
         EditConfigurationController: function (scope, resourceFactory, routeParams, location) {
 
@@ -15654,7 +15694,7 @@
                     }
                 }
 
-                console.log("gsim id"+scope.gsimAccountId);
+                console.log("gsim id"+scope.formData.gsimAccountId);
 
                 var child=0;
                 var reqFirstDate = dateFilter(scope.date.first, scope.df);
@@ -15721,6 +15761,9 @@
                         loanApplication.syncDisbursementWithMeeting = scope.loanApplicationCommonData.syncDisbursementWithMeeting;
                         loanApplication.lastApplication=false;
                         loanApplication.applicationId=applicationId;
+
+                        loanApplication.linkAccountId=scope.formData.gsimAccountId;
+                        console.log('formData.gsimAccountId : '+scope.formData.gsimAccountId);
 
                         if (!_.isUndefined(scope.formData.datatables) && scope.formData.datatables.length > 0) {
                             loanApplication.datatables = scope.formData.datatables;
@@ -24251,7 +24294,7 @@
             scope.addNewRow = function () {
                 var fromPeriod = '';
                 var amountRangeFrom = '';
-                var periodType = '';
+                var periodType = {}; 
                 var toPeriod = '';
                 var amountRangeTo = '';
                 if (_.isNull(scope.chart.chartSlabs) || _.isUndefined(scope.chart.chartSlabs)) {
@@ -25433,7 +25476,7 @@
             scope.addNewRow = function () {
                 var fromPeriod = '';
                 var amountRangeFrom = '';
-                var periodType = '';
+                var periodType = {}; 
                 var toPeriod = '';
                 var amountRangeTo = '';
                 if (_.isNull(scope.chart.chartSlabs) || _.isUndefined(scope.chart.chartSlabs)) {
@@ -25854,10 +25897,6 @@
                 scope.formData.accountingRule = '1';
                 scope.shareproduct = angular.copy(scope.formData);
             });
-            
-            scope.shareCapitaValue = function () {
-                 scope.formData.shareCapital =   scope.formData.unitPrice * scope.formData.sharesIssued;
-            };
 
             scope.$watch('formData',function(newVal){
                 scope.shareproduct = angular.extend(scope.shareproduct,newVal);
@@ -30027,7 +30066,7 @@
 }(mifosX.controllers || {}));
 ;(function (module) {
     mifosX.controllers = _.extend(module, {
-        ViewReportsController: function (scope, routeParams, resourceFactory, location, route) {
+        ViewReportsController: function (scope, routeParams, resourceFactory,  location, anchorScroll, route) {
             scope.reports = [];
             scope.type = routeParams.type;
             //to display type of report on breadcrumb
@@ -30036,6 +30075,12 @@
 
             scope.routeTo = function (report) {
                 location.path('/run_report/' + report.report_name).search({reportId: report.report_id, type: report.report_type});
+            };
+
+            scope.scrollto = function (link){
+                location.hash(link);
+                anchorScroll();
+
             };
 
             if (!scope.searchCriteria.reports) {
@@ -30109,7 +30154,7 @@
             };
         }
     });
-    mifosX.ng.application.controller('ViewReportsController', ['$scope', '$routeParams', 'ResourceFactory', '$location', '$route', mifosX.controllers.ViewReportsController]).run(function ($log) {
+    mifosX.ng.application.controller('ViewReportsController', ['$scope', '$routeParams', 'ResourceFactory', '$location', '$route', '$anchorScroll' ,mifosX.controllers.ViewReportsController]).run(function ($log) {
         $log.info("ViewReportsController initialized");
     });
 }(mifosX.controllers || {}));;(function (module) {

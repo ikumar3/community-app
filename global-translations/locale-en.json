@@ -2671,6 +2671,7 @@
   "label.input.addressline1": "Address Line 1",
   "label.input.addressline2": "Address Line 2",
   "label.input.addressline3": "Address Line 3",
+  "label.input.street": "Street",
   "label.input.town_village": "Town / Village",
   "label.input.county_district": "County / District",
   "label.input.state_province": "State / Province",
@@ -4283,6 +4284,7 @@
   "label.anchor.editrate": "Edit Rate",
   "label.error.rate.already.exist" : "Rate already exist.",
   "label.selectrate" : "Select Rate",
+   "label.input.street":"Street",
 
   "----End---": "--End of file--- "
 }
