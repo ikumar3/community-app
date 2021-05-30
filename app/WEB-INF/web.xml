@@ -10,7 +10,7 @@
   xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" 
   id="mifosng-platform-provider" version="2.5">
 
-	<display-name>Mifos Community Reference App</display-name>
+	<display-name>Yashvi App</display-name>
 	<description>Microfinance AngularJS UI.</description>
 	
 </web-app>
